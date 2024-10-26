@@ -6,6 +6,15 @@
  * Author: Ali Hasan
  */
 
+
+function enqueue_styles() {
+    wp_register_style( 'custom-font-css', plugin_dir_url(__FILE__) . './public/css/custom-font-manager.css', false, '1.0.0' );
+    wp_enqueue_style( 'custom-font-css' );
+}
+
+add_action( 'admin_enqueue_scripts', 'enqueue_styles' );
+
+
 // Register Custom Post Type
 function custom_font() {
     register_post_type('font', array(
@@ -71,7 +80,6 @@ function custom_font_metabox_callback($post) {
 
     $font_weight = get_post_meta($post->ID, '_custom_font_weight', true) ?: 'normal';
     $font_style = get_post_meta($post->ID, '_custom_font_style', true) ?: 'normal';
-
     echo '<label>Weight:</label><select name="custom_font_weight" id="custom_font_weight">';
     $weights = ['normal', '100', '200', '300', '400', '500', '600', '700', '800', '900', 'bold'];
     foreach ($weights as $weight) {
@@ -88,10 +96,12 @@ function custom_font_metabox_callback($post) {
 
     foreach ($font_urls as $type => $url) {
         echo '<div class="font-upload-group">';
-        echo '<label for="custom_font_' . $type . '">' . strtoupper($type) . ' Font:</label><br>';
+        echo '<label class="custom-font-label" for="custom_font_' . $type . '">' . strtoupper($type) . ' Font:</label><br>';
+        echo '<div class="font-upload-input-wrapper">';
         echo '<input type="text" id="custom_font_' . $type . '" name="custom_font_' . $type . '" value="' . esc_attr($url) . '" style="width: 80%;" />';
         echo '<button class="button upload_custom_font_button" data-type="' . $type . '" ' . ($url ? 'style="display:none;"' : '') . '>Upload Font</button>';
         echo '<button class="button delete_font_group" ' . ($url ? '' : 'style="display:none;"') . '>Delete</button><br><br>';
+        echo '</div>';
         echo '<div id="font-preview-' . $type . '"></div><hr></div>';
     }
     echo '<div id="additional-font-files-container"></div>';

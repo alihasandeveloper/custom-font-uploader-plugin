@@ -1,0 +1,37 @@
+button.button.delete_font_group {
+    width: 100px;
+    text-align: center;
+    background: #515962;
+    color: #fff;
+    font-weight: 500;
+}
+
+button.button.upload_custom_font_button {
+    width: 100px;
+    background: #515962;
+    color: #fff;
+    font-weight: 500;
+    border: none;
+}
+
+.font-upload-input-wrapper {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+}
+.font-upload-input-wrapper input {
+    width: 100% !important;
+}
+
+#add_font_group, button.button.delete_group_set{
+    background: #515962;
+    color: #fff;
+    font-weight: 500;
+    border: none;
+}
+
+.custom-font-label {
+    font-weight: 500;
+}
