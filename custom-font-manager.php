@@ -37,13 +37,24 @@ function custom_font()
 
 add_action('init', 'custom_font');
 
+
 // Enqueue media uploader for admin pages
-function custom_font_enqueue_media_uploader()
-{
+function custom_allow_font_mime_types($mimes) {
+    $mimes['woff'] = 'font/woff';
+    $mimes['woff2'] = 'font/woff2';
+    $mimes['ttf'] = 'font/ttf';
+    $mimes['svg'] = 'image/svg+xml';
+    $mimes['eot'] = 'application/vnd.ms-fontobject';
+    return $mimes;
+}
+add_filter('upload_mimes', 'custom_allow_font_mime_types');
+
+// Enqueue Media Uploader
+function custom_font_enqueue_media_uploader() {
     wp_enqueue_media();
 }
-
 add_action('admin_enqueue_scripts', 'custom_font_enqueue_media_uploader');
+
 
 // Add Metabox
 function custom_font_metabox()
@@ -247,55 +258,3 @@ function custom_font_upload_script()
 }
 
 add_action('admin_footer', 'custom_font_upload_script');
-
-
-?>
-
-<!--<div class="repeater_row">-->
-<!--    <div class="close">-->
-<!--        <div class="font-header-wrapper">-->
-<!--            <div class="font-weight-wrapper">-->
-<!--                <label for="weight">Weight:</label>-->
-<!--                <select name="weight" id="weight">-->
-<!--                    <option value="normal">Normal</option>-->
-<!--                    <option value="100">100</option>-->
-<!--                    <option value="400">400</option>-->
-<!--                    <option value="bold">800</option>-->
-<!--                </select>-->
-<!--            </div>-->
-<!--            <div class="font-style-wrapper">-->
-<!--                <label for="style">Style:</label>-->
-<!--                <select name="style" id="" class="font_style">-->
-<!--                    <option value="normal">Normal</option>-->
-<!--                    <option value="italic">Italic</option>-->
-<!--                    <option value="oblique">Oblique</option>-->
-<!--                </select>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--        <div class="font-title-wrapper">-->
-<!--            <p>Frontis is Making Web Beautiful!!!</p>-->
-<!--        </div>-->
-<!--        <div class="font-button-wrapper">-->
-<!--            <button id="edit_button">Edit</button>-->
-<!--            <button id="delete_button">Delete</button>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--    <div class="repeater_row_content">-->
-<!--        <div class="repeater_row_content_woff">-->
-<!---->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!---->
-<!--var newGroupHtml = `<div class="font-group" data-index="${groupIndex}">-->
-<!--    --><?php //foreach (['woff', 'woff2', 'ttf', 'svg', 'eot'] as $type) { ?>
-<!--        <label>--><?php //echo strtoupper($type); ?><!-- URL:</label>-->
-<!--        <input type="text" name="custom_font_variations[${groupIndex}][--><?php //echo $type; ?><!--]" value="" style="width: 80%;" />-->
-<!--        <button class="button upload_custom_font_button" data-type="--><?php //echo $type; ?><!--" data-index="${groupIndex}">Upload</button>-->
-<!--        <button class="button remove_font_button" data-index="${groupIndex}" style="display:none;">Remove</button><br>-->
-<!--    --><?php //} ?>
-<!--</div>`;-->
-<!---->
-<!---->
-<!---->
