@@ -1,22 +1,22 @@
 <?php
-/**
- * Plugin Name: Custom Font Plugin
- * Description: A plugin to manage custom fonts with upload functionality.
- * Version: 1.0
- * Author: Ali Hasan
- */
+/*
+Plugin Name: Custom Font Upload
+Description: A plugin to manage custom font uploads.
+Version: 1.0
+Author: Ali Hasan
+*/
 
-
-function enqueue_styles() {
-    wp_register_style( 'custom-font-css', plugin_dir_url(__FILE__) . './public/css/custom-font-manager.css', false, '1.0.0' );
-    wp_enqueue_style( 'custom-font-css' );
+function enqueue_styles()
+{
+    wp_register_style('custom-font-css', plugin_dir_url(__FILE__) . './public/css/custom-font-manager.css', false, '1.0.0');
+    wp_enqueue_style('custom-font-css');
 }
 
-add_action( 'admin_enqueue_scripts', 'enqueue_styles' );
-
+add_action('admin_enqueue_scripts', 'enqueue_styles');
 
 // Register Custom Post Type
-function custom_font() {
+function custom_font()
+{
     register_post_type('font', array(
         'labels' => array(
             'name' => 'Fonts',
@@ -34,27 +34,20 @@ function custom_font() {
         'has_archive' => false,
     ));
 }
+
 add_action('init', 'custom_font');
 
-// Allow additional MIME types for font uploads
-function custom_allow_font_mime_types($mimes) {
-    $mimes['woff'] = 'font/woff';
-    $mimes['woff2'] = 'font/woff2';
-    $mimes['ttf'] = 'font/ttf';
-    $mimes['svg'] = 'image/svg+xml';
-    $mimes['eot'] = 'application/vnd.ms-fontobject';
-    return $mimes;
-}
-add_filter('upload_mimes', 'custom_allow_font_mime_types');
-
-// Enqueue Media Uploader
-function custom_font_enqueue_media_uploader() {
+// Enqueue media uploader for admin pages
+function custom_font_enqueue_media_uploader()
+{
     wp_enqueue_media();
 }
+
 add_action('admin_enqueue_scripts', 'custom_font_enqueue_media_uploader');
 
 // Add Metabox
-function custom_font_metabox() {
+function custom_font_metabox()
+{
     add_meta_box(
         'custom_font_upload',
         'Manage Your Font Files',
@@ -64,146 +57,245 @@ function custom_font_metabox() {
         'high'
     );
 }
+
 add_action('add_meta_boxes', 'custom_font_metabox');
 
 // Metabox Callback
-function custom_font_metabox_callback($post) {
+function custom_font_metabox_callback($post)
+{
     wp_nonce_field('custom_font_nonce', 'custom_font_nonce_field');
 
-    $font_urls = array(
-        'woff' => get_post_meta($post->ID, '_custom_font_woff', true),
-        'woff2' => get_post_meta($post->ID, '_custom_font_woff2', true),
-        'ttf' => get_post_meta($post->ID, '_custom_font_ttf', true),
-        'svg' => get_post_meta($post->ID, '_custom_font_svg', true),
-        'eot' => get_post_meta($post->ID, '_custom_font_eot', true),
-    );
+    // Load existing font variations
+    $font_variations = get_post_meta($post->ID, '_custom_font_variations', true) ?: [];
 
-    $font_weight = get_post_meta($post->ID, '_custom_font_weight', true) ?: 'normal';
-    $font_style = get_post_meta($post->ID, '_custom_font_style', true) ?: 'normal';
-    echo '<label>Weight:</label><select name="custom_font_weight" id="custom_font_weight">';
-    $weights = ['normal', '100', '200', '300', '400', '500', '600', '700', '800', '900', 'bold'];
-    foreach ($weights as $weight) {
-        echo '<option value="' . $weight . '" ' . selected($font_weight, $weight, false) . '>' . ucfirst($weight) . '</option>';
-    }
-    echo '</select>';
+    echo '<div id="font-variations-container">';
 
-    echo '<label>Style:</label><select name="custom_font_style" id="custom_font_style">';
-    $styles = ['normal', 'italic', 'oblique'];
-    foreach ($styles as $style) {
-        echo '<option value="' . $style . '" ' . selected($font_style, $style, false) . '>' . ucfirst($style) . '</option>';
+    foreach ($font_variations as $index => $variation) {
+        display_font_variation_group($index, $variation);
     }
-    echo '</select><hr><div id="font-files-container">';
 
-    foreach ($font_urls as $type => $url) {
-        echo '<div class="font-upload-group">';
-        echo '<label class="custom-font-label" for="custom_font_' . $type . '">' . strtoupper($type) . ' Font:</label><br>';
-        echo '<div class="font-upload-input-wrapper">';
-        echo '<input type="text" id="custom_font_' . $type . '" name="custom_font_' . $type . '" value="' . esc_attr($url) . '" style="width: 80%;" />';
-        echo '<button class="button upload_custom_font_button" data-type="' . $type . '" ' . ($url ? 'style="display:none;"' : '') . '>Upload Font</button>';
-        echo '<button class="button delete_font_group" ' . ($url ? '' : 'style="display:none;"') . '>Delete</button><br><br>';
-        echo '</div>';
-        echo '<div id="font-preview-' . $type . '"></div><hr></div>';
-    }
-    echo '<div id="additional-font-files-container"></div>';
-    echo '<button class="button" id="add_font_group">Add Font Variations</button></div>';
+    echo '</div>';
+    echo '<button class="button" id="add_font_group">Add Font Variation</button>';
 }
 
-// Save font meta
-function save_custom_font_meta($post_id) {
+// Display font variation group
+function display_font_variation_group($index, $variation = [])
+{
+    $font_types = ['woff', 'woff2', 'ttf', 'svg', 'eot'];
+
+    echo '<div class="font-group" data-index="' . esc_attr($index) . '">';
+
+    foreach ($font_types as $type) {
+        $url = $variation[$type] ?? '';
+        echo '<label>' . strtoupper($type) . ' URL:</label>';
+        echo '<input type="text" name="custom_font_variations[' . esc_attr($index) . '][' . esc_attr($type) . ']" value="' . esc_url($url) . '" style="width: 80%;" />';
+        echo '<button class="button upload_custom_font_button" data-type="' . $type . '" data-index="' . esc_attr($index) . '">Upload</button>';
+        echo '<button class="button remove_font_button" data-index="' . esc_attr($index) . '" ' . ($url ? '' : 'style="display:none;"') . '>Remove</button><br>';
+    }
+
+    echo '</div>';
+}
+
+// Save font variations
+function save_custom_font_meta($post_id)
+{
     if (!isset($_POST['custom_font_nonce_field']) || !wp_verify_nonce($_POST['custom_font_nonce_field'], 'custom_font_nonce')) {
         return;
     }
 
-    $font_types = ['woff', 'woff2', 'ttf', 'svg', 'eot'];
-    foreach ($font_types as $type) {
-        if (isset($_POST['custom_font_' . $type])) {
-            update_post_meta($post_id, '_custom_font_' . $type, sanitize_text_field($_POST['custom_font_' . $type]));
-        }
-    }
+    if (isset($_POST['custom_font_variations'])) {
+        $variations = array_map(function ($variation) {
+            return [
+                'woff' => sanitize_text_field($variation['woff'] ?? ''),
+                'woff2' => sanitize_text_field($variation['woff2'] ?? ''),
+                'ttf' => sanitize_text_field($variation['ttf'] ?? ''),
+                'svg' => sanitize_text_field($variation['svg'] ?? ''),
+                'eot' => sanitize_text_field($variation['eot'] ?? ''),
+            ];
+        }, $_POST['custom_font_variations']);
 
-    if (isset($_POST['custom_font_weight'])) {
-        update_post_meta($post_id, '_custom_font_weight', sanitize_text_field($_POST['custom_font_weight']));
-    }
-
-    if (isset($_POST['custom_font_style'])) {
-        update_post_meta($post_id, '_custom_font_style', sanitize_text_field($_POST['custom_font_style']));
+        update_post_meta($post_id, '_custom_font_variations', $variations);
+    } else {
+        delete_post_meta($post_id, '_custom_font_variations');
     }
 }
+
 add_action('save_post', 'save_custom_font_meta');
 
-// JavaScript for media uploader and add/delete field groups
-function custom_font_upload_script() {
+function custom_font_upload_script()
+{
     ?>
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
-            var file_frame;
+            let groupIndex = <?php echo json_encode(count(get_post_meta(get_the_ID(), '_custom_font_variations', true) ?: [])); ?>;
 
-            // Upload font button functionality
+            // Add new font variation group
+            $('#add_font_group').on('click', function (event) {
+                event.preventDefault();
+
+                let newGroupHtml = `<div class="repeater_row" data-index="${groupIndex}">
+                        <div class="close" data-index="${groupIndex}">
+                            <div class="font-header-wrapper">
+                                <div class="font-weight-wrapper">
+                                    <label for="weight">Weight:</label>
+                                    <select name="weight" id="weight">
+                                        <option value="normal">Normal</option>
+                                        <option value="100">100</option>
+                                        <option value="400">400</option>
+                                        <option value="bold">800</option>
+                                    </select>
+                                </div>
+                                <div class="font-style-wrapper">
+                                    <label for="style">Style:</label>
+                                    <select name="style" id="" class="font_style">
+                                        <option value="normal">Normal</option>
+                                        <option value="italic">Italic</option>
+                                        <option value="oblique">Oblique</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="font-title-wrapper">
+                                <p>Frontis is Making Web Beautiful!!!</p>
+                            </div>
+                            <div class="font-button-wrapper">
+                                 <button type="button" class="font_edit_button">Close</button>
+                                <button  type="button" id="font_delete_button">Delete</button>
+                            </div>
+                        </div>
+                        <div class="repeater_row_content" id="font-open-close" data-index="${groupIndex}">
+                            <?php foreach (['woff', 'woff2', 'ttf', 'svg', 'eot'] as $type) { ?>
+                                <div class="font-upload-group">
+                                    <label><?php echo strtoupper($type); ?> URL:</label>
+                                    <input type="text" name="custom_font_variations[${groupIndex}][<?php echo $type; ?>]" value="" />
+                                    <button class="button upload_custom_font_button" data-type="<?php echo $type; ?>" data-index="${groupIndex}">Upload</button>
+                                    <button class="button remove_font_button" data-index="${groupIndex}" style="display:none;">Remove</button>
+                                </div>
+                            <?php } ?>
+                    <div>
+                </div>`;
+
+                $('#font-variations-container').append(newGroupHtml);
+                groupIndex++;
+            });
+
+            // Upload font file and set URL for specific input only
             $(document).on('click', '.upload_custom_font_button', function (event) {
                 event.preventDefault();
-                var button = $(this);
-                var expectedType = button.data('type'); // Get the expected file type
 
-                file_frame = wp.media({
-                    title: 'Select a Font',
-                    button: { text: 'Use this font' },
-                    multiple: false
+                var button = $(this);
+                var input = button.siblings('input[type="text"]'); // Get the corresponding input
+                var fileType = button.data('type'); // Get the file type for this button
+
+                var file_frame = wp.media({
+                    title: 'Select a ' + fileType.toUpperCase() + ' Font',
+                    button: {text: 'Use this font'},
+                    multiple: false // Set to false for single file upload
                 });
 
                 file_frame.on('select', function () {
                     var attachment = file_frame.state().get('selection').first().toJSON();
-                    var inputField = button.siblings('input[type="text"]');
-                    var fileExtension = attachment.filename.split('.').pop().toLowerCase(); // Get the file extension
+                    var fileExtension = attachment.filename.split('.').pop().toLowerCase();
 
-                    // Check if the file extension matches the expected type
-                    if (fileExtension !== expectedType) {
-                        alert('Invalid file type! Please upload a .' + expectedType + ' file.');
+                    // Check if the selected file matches the required type
+                    if (fileExtension !== fileType) {
+                        alert('Invalid file type! Please upload a .' + fileType + ' file.');
                         return;
                     }
 
-                    inputField.val(attachment.url);
-                    button.hide();
-                    button.siblings('.delete_font_group').show();
+                    input.val(attachment.url); // Set the URL in the corresponding input field
+                    button.hide(); // Hide the upload button
+                    button.siblings('.remove_font_button').show(); // Show the remove button
                 });
 
-                file_frame.open();
+                file_frame.open(); // Open the media frame
             });
 
-            // Delete font input field content
-            $(document).on('click', '.delete_font_group', function (event) {
+            $(document).on('click', '.font_edit_button', function () {
+                const index = $(this).data('index');
+                const element = $('#font-open-close');
+                // Toggle the 'font-open' class
+                $(element).toggleClass('font-open');
+
+                // Change button text based on the class
+                if ($(element).hasClass('font-open')) {
+                    $(this).text('Close');
+                } else {
+                    $(this).text('Open');
+                }
+            });
+
+
+            $(document).on('click', '#font_delete_button', function () {
+                const index = $(this).data('index');
+                $(this).closest('.repeater_row').remove(); // Remove the row
+            });
+
+
+            // Remove URL and reset upload button for specific input
+            $(document).on('click', '.remove_font_button', function (event) {
                 event.preventDefault();
                 var button = $(this);
-                var inputField = button.siblings('input[type="text"]');
+                var input = button.siblings('input[type="text"]');
 
-                inputField.val('');
-                button.hide();
-                button.siblings('.upload_custom_font_button').show();
-            });
-
-            // Add 5 new font input fields to new div container with a delete button for the group
-            $('#add_font_group').on('click', function (event) {
-                event.preventDefault();
-                var newGroupContainer = $('<div class="font-group-set"></div>');
-
-                for (var i = 0; i < 5; i++) {
-                    var newGroup = $('.font-upload-group').first().clone();
-                    newGroup.find('input').val('');
-                    newGroup.find('.delete_font_group').hide();
-                    newGroup.find('.upload_custom_font_button').show();
-                    newGroupContainer.append(newGroup);
-                }
-
-                newGroupContainer.append('<button class="button delete_group_set">Delete Group</button><hr>');
-                $('#additional-font-files-container').append(newGroupContainer);
-            });
-
-            // Delete the entire group of 5 font input fields
-            $(document).on('click', '.delete_group_set', function (event) {
-                event.preventDefault();
-                $(this).parent('.font-group-set').remove();
+                input.val(''); // Clear the input value
+                button.hide(); // Hide the remove button
+                button.siblings('.upload_custom_font_button').show(); // Show the upload button again
             });
         });
     </script>
     <?php
 }
+
 add_action('admin_footer', 'custom_font_upload_script');
+
+
+?>
+
+<!--<div class="repeater_row">-->
+<!--    <div class="close">-->
+<!--        <div class="font-header-wrapper">-->
+<!--            <div class="font-weight-wrapper">-->
+<!--                <label for="weight">Weight:</label>-->
+<!--                <select name="weight" id="weight">-->
+<!--                    <option value="normal">Normal</option>-->
+<!--                    <option value="100">100</option>-->
+<!--                    <option value="400">400</option>-->
+<!--                    <option value="bold">800</option>-->
+<!--                </select>-->
+<!--            </div>-->
+<!--            <div class="font-style-wrapper">-->
+<!--                <label for="style">Style:</label>-->
+<!--                <select name="style" id="" class="font_style">-->
+<!--                    <option value="normal">Normal</option>-->
+<!--                    <option value="italic">Italic</option>-->
+<!--                    <option value="oblique">Oblique</option>-->
+<!--                </select>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="font-title-wrapper">-->
+<!--            <p>Frontis is Making Web Beautiful!!!</p>-->
+<!--        </div>-->
+<!--        <div class="font-button-wrapper">-->
+<!--            <button id="edit_button">Edit</button>-->
+<!--            <button id="delete_button">Delete</button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="repeater_row_content">-->
+<!--        <div class="repeater_row_content_woff">-->
+<!---->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!---->
+<!--var newGroupHtml = `<div class="font-group" data-index="${groupIndex}">-->
+<!--    --><?php //foreach (['woff', 'woff2', 'ttf', 'svg', 'eot'] as $type) { ?>
+<!--        <label>--><?php //echo strtoupper($type); ?><!-- URL:</label>-->
+<!--        <input type="text" name="custom_font_variations[${groupIndex}][--><?php //echo $type; ?><!--]" value="" style="width: 80%;" />-->
+<!--        <button class="button upload_custom_font_button" data-type="--><?php //echo $type; ?><!--" data-index="${groupIndex}">Upload</button>-->
+<!--        <button class="button remove_font_button" data-index="${groupIndex}" style="display:none;">Remove</button><br>-->
+<!--    --><?php //} ?>
+<!--</div>`;-->
+<!---->
+<!---->
+<!---->

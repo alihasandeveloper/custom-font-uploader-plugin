@@ -21,17 +21,83 @@ button.button.upload_custom_font_button {
     width: 100%;
     gap: 20px;
 }
+
 .font-upload-input-wrapper input {
     width: 100% !important;
 }
 
-#add_font_group, button.button.delete_group_set{
+#add_font_group, button.button.delete_group_set {
     background: #515962;
     color: #fff;
     font-weight: 500;
     border: none;
+    margin-top: 20px;
 }
 
 .custom-font-label {
     font-weight: 500;
+}
+
+#font-files-container {
+    margin-bottom: 20px;
+}
+
+div.close {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.font-header-wrapper {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+}
+
+button#edit_button, button#delete_button {
+    background: transparent;
+    font-weight: 500;
+    font-size: 16px;
+    border: none;
+}
+
+.font-title-wrapper {
+    flex-grow: 1;
+}
+
+.font-open {
+    display: none;
+}
+
+.font-upload-group {
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 5px rgba(0,0,0,.05);
+    padding: 10px 20px;
+}
+.font-upload-group input[type="text"] {
+    width: 100%;
+}
+
+.font-upload-group label {
+    width: 120px;
+    font-size: 13px;
+}
+
+.font-title-wrapper p {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+button.font_edit_button, button#font_delete_button {
+    width: 85px;
+    padding: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
 }
