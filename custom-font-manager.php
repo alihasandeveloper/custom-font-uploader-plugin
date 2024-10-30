@@ -101,6 +101,7 @@ function display_font_variation_group($index, $variation = [])
     $font_styles = ['normal', 'italic', 'oblique'];
 
     echo '<div class="font-group" data-index="' . esc_attr($index) . '">';
+
     echo '<div class="close">';
     echo '<div class="font-header-wrapper">';
     echo '<label>Font Weight:</label>';
@@ -132,17 +133,18 @@ function display_font_variation_group($index, $variation = [])
     <?php
     echo '</div>';
 
-
+    echo '<div class="repeater_row_content">';
     foreach ($font_types as $type) {
         $url = $variation[$type] ?? '';
         echo '<div class="font-upload-group">';
         echo '<label>' . strtoupper($type) . ' URL:</label>';
-        echo '<input type="text" name="custom_font_variations[' . esc_attr($index) . '][' . esc_attr($type) . ']" value="' . esc_url($url) . '" style="width: 80%;" />';
+        echo '<input type="text" name="custom_font_variations[' . esc_attr($index) . '][' . esc_attr($type) . ']" value="' . esc_url($url) . '"" />';
         echo '<button type="button" class="button upload_custom_font_button" data-type="' . $type . '" ' . ($url ? 'style="display:none;"' : '') . '>Upload Font</button>';
-        echo '<button type="button" class="button" id="font-input-clear" ' . ($url ? '' : 'style="display:none;"') . '>Remove</button><br><br>';
+        echo '<button type="button" class="button remove_font_button" id="font-input-clear" ' . ($url ? '' : 'style="display:none;"') . '>Remove</button><br><br>';
         echo '</div><br>';
     }
 
+    echo '</div>';
     echo '</div>';
 }
 
@@ -186,7 +188,7 @@ function custom_font_upload_script()
             $('#add_font_group').on('click', function (event) {
                 event.preventDefault();
 
-                let newGroupHtml = `<div class="repeater_row" data-index="${groupIndex}">
+                let newGroupHtml = `<div class="font-group" data-index="${groupIndex}">
                         <div class="close" data-index="${groupIndex}">
                             <div class="font-header-wrapper">
                                 <div class="font-weight-wrapper">
@@ -224,8 +226,8 @@ function custom_font_upload_script()
                             <?php foreach (['woff', 'woff2', 'ttf', 'svg', 'eot'] as $type) { ?>
                                 <div class="font-upload-group">
                                     <label><?php echo strtoupper($type); ?> URL:</label>
-                                    <input type="text" name="custom_font_variations[${groupIndex}][<?php echo $type; ?>]" value="" />
-                                    <button class="button upload_custom_font_button" data-type="<?php echo $type; ?>" data-index="${groupIndex}">Upload</button>
+                                    <input type="text" name="custom_font_variations[${groupIndex}][<?php echo $type; ?>]" value=""  />
+                                    <button class="button upload_custom_font_button" data-type="<?php echo $type; ?>" data-index="${groupIndex}">Upload Font</button>
                                     <button class="button remove_font_button" data-index="${groupIndex}" style="display:none;">Remove</button>
                                 </div>
                             <?php } ?>
@@ -282,13 +284,28 @@ function custom_font_upload_script()
 
             $(document).on('click', '.font_delete_button', function () {
                 const index = $(this).data('index');
-                $(this).closest('.repeater_row').remove(); // Remove the row
+                $(this).closest('.font-group').remove(); // Remove the row
             });
             $(document).on('click', '#delete_meta', function () {
                 const index = $(this).data('index');
-                $(this).closest('.font-group').remove(); // Remove the row
-                console.log('connection successful')
+                $(this).closest('.font-group').remove();
             });
+
+
+            $(document).on('click', '.font_edit_button', function () {
+                const repeaterRow = $(this).closest('.font-group');
+                const content = repeaterRow.find('.repeater_row_content');
+
+                content.slideToggle();
+
+                // Toggle button text
+                if ($(this).text() === 'Open') {
+                    $(this).text('Close');
+                } else {
+                    $(this).text('Open');
+                }
+            });
+
 
 
             // Remove URL and reset upload button for specific input
