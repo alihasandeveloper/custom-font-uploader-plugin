@@ -39,7 +39,8 @@ add_action('init', 'custom_font');
 
 
 // Enqueue media uploader for admin pages
-function custom_allow_font_mime_types($mimes) {
+function custom_allow_font_mime_types($mimes)
+{
     $mimes['woff'] = 'font/woff';
     $mimes['woff2'] = 'font/woff2';
     $mimes['ttf'] = 'font/ttf';
@@ -50,7 +51,8 @@ function custom_allow_font_mime_types($mimes) {
 add_filter('upload_mimes', 'custom_allow_font_mime_types');
 
 // Enqueue Media Uploader
-function custom_font_enqueue_media_uploader() {
+function custom_font_enqueue_media_uploader()
+{
     wp_enqueue_media();
 }
 add_action('admin_enqueue_scripts', 'custom_font_enqueue_media_uploader');
@@ -71,6 +73,7 @@ function custom_font_metabox()
 
 add_action('add_meta_boxes', 'custom_font_metabox');
 
+// Metabox Callback
 // Metabox Callback
 function custom_font_metabox_callback($post)
 {
@@ -93,15 +96,35 @@ function custom_font_metabox_callback($post)
 function display_font_variation_group($index, $variation = [])
 {
     $font_types = ['woff', 'woff2', 'ttf', 'svg', 'eot'];
+    $font_weights = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+    $font_styles = ['normal', 'italic', 'oblique'];
 
     echo '<div class="font-group" data-index="' . esc_attr($index) . '">';
 
+    echo '<label>Font Weight:</label>';
+    echo '<select name="custom_font_variations[' . esc_attr($index) . '][weight]">';
+    foreach ($font_weights as $weight) {
+        $selected = (isset($variation['weight']) && $variation['weight'] == $weight) ? 'selected' : '';
+        echo '<option value="' . esc_attr($weight) . '" ' . $selected . '>' . esc_html($weight) . '</option>';
+    }
+    echo '</select><br>';
+
+    echo '<label>Font Style:</label>';
+    echo '<select name="custom_font_variations[' . esc_attr($index) . '][style]">';
+    foreach ($font_styles as $style) {
+        $selected = (isset($variation['style']) && $variation['style'] == $style) ? 'selected' : '';
+        echo '<option value="' . esc_attr($style) . '" ' . $selected . '>' . esc_html($style) . '</option>';
+    }
+    echo '</select><br>';
+
     foreach ($font_types as $type) {
         $url = $variation[$type] ?? '';
+        echo '<div class="font-upload-group">';
         echo '<label>' . strtoupper($type) . ' URL:</label>';
         echo '<input type="text" name="custom_font_variations[' . esc_attr($index) . '][' . esc_attr($type) . ']" value="' . esc_url($url) . '" style="width: 80%;" />';
-        echo '<button class="button upload_custom_font_button" data-type="' . $type . '" data-index="' . esc_attr($index) . '">Upload</button>';
-        echo '<button class="button remove_font_button" data-index="' . esc_attr($index) . '" ' . ($url ? '' : 'style="display:none;"') . '>Remove</button><br>';
+        echo '<button class="button upload_custom_font_button" data-type="' . esc_attr($type) . '" data-index="' . esc_attr($index) . '">Upload</button>';
+        echo '<button class="button remove_font_button" data-index="' . esc_attr($index) . '" ' . ($url ? '' : 'style="display:none;"') . '>Remove</button>';
+        echo '</div><br>';
     }
 
     echo '</div>';
@@ -122,6 +145,8 @@ function save_custom_font_meta($post_id)
                 'ttf' => sanitize_text_field($variation['ttf'] ?? ''),
                 'svg' => sanitize_text_field($variation['svg'] ?? ''),
                 'eot' => sanitize_text_field($variation['eot'] ?? ''),
+                'weight' => sanitize_text_field($variation['weight'] ?? ''),
+                'style' => sanitize_text_field($variation['style'] ?? ''),
             ];
         }, $_POST['custom_font_variations']);
 
@@ -133,15 +158,16 @@ function save_custom_font_meta($post_id)
 
 add_action('save_post', 'save_custom_font_meta');
 
+
 function custom_font_upload_script()
 {
-    ?>
+?>
     <script type="text/javascript">
-        jQuery(document).ready(function ($) {
+        jQuery(document).ready(function($) {
             let groupIndex = <?php echo json_encode(count(get_post_meta(get_the_ID(), '_custom_font_variations', true) ?: [])); ?>;
 
             // Add new font variation group
-            $('#add_font_group').on('click', function (event) {
+            $('#add_font_group').on('click', function(event) {
                 event.preventDefault();
 
                 let newGroupHtml = `<div class="repeater_row" data-index="${groupIndex}">
@@ -149,16 +175,21 @@ function custom_font_upload_script()
                             <div class="font-header-wrapper">
                                 <div class="font-weight-wrapper">
                                     <label for="weight">Weight:</label>
-                                    <select name="weight" id="weight">
-                                        <option value="normal">Normal</option>
+                                    <select name="custom_font_variations[${groupIndex}][weight]" class="font_weight">
                                         <option value="100">100</option>
+                                        <option value="200">200</option>
+                                        <option value="300">300</option>
                                         <option value="400">400</option>
-                                        <option value="bold">800</option>
+                                        <option value="500">500</option>
+                                        <option value="600">600</option>
+                                        <option value="700">700</option>
+                                        <option value="800">800</option>
+                                        <option value="900">900</option>
                                     </select>
                                 </div>
                                 <div class="font-style-wrapper">
                                     <label for="style">Style:</label>
-                                    <select name="style" id="" class="font_style">
+                                    <select name="custom_font_variations[${groupIndex}][style]" class="font_style">
                                         <option value="normal">Normal</option>
                                         <option value="italic">Italic</option>
                                         <option value="oblique">Oblique</option>
@@ -170,7 +201,7 @@ function custom_font_upload_script()
                             </div>
                             <div class="font-button-wrapper">
                                  <button type="button" class="font_edit_button">Close</button>
-                                <button  type="button" id="font_delete_button">Delete</button>
+                                <button  type="button" class="font_delete_button" data-index="${groupIndex}">Delete</button>
                             </div>
                         </div>
                         <div class="repeater_row_content" id="font-open-close" data-index="${groupIndex}">
@@ -190,7 +221,7 @@ function custom_font_upload_script()
             });
 
             // Upload font file and set URL for specific input only
-            $(document).on('click', '.upload_custom_font_button', function (event) {
+            $(document).on('click', '.upload_custom_font_button', function(event) {
                 event.preventDefault();
 
                 var button = $(this);
@@ -199,11 +230,13 @@ function custom_font_upload_script()
 
                 var file_frame = wp.media({
                     title: 'Select a ' + fileType.toUpperCase() + ' Font',
-                    button: {text: 'Use this font'},
+                    button: {
+                        text: 'Use this font'
+                    },
                     multiple: false // Set to false for single file upload
                 });
 
-                file_frame.on('select', function () {
+                file_frame.on('select', function() {
                     var attachment = file_frame.state().get('selection').first().toJSON();
                     var fileExtension = attachment.filename.split('.').pop().toLowerCase();
 
@@ -221,7 +254,7 @@ function custom_font_upload_script()
                 file_frame.open(); // Open the media frame
             });
 
-            $(document).on('click', '.font_edit_button', function () {
+            $(document).on('click', '.font_edit_button', function() {
                 const index = $(this).data('index');
                 const element = $('#font-open-close');
                 // Toggle the 'font-open' class
@@ -235,26 +268,26 @@ function custom_font_upload_script()
                 }
             });
 
-
-            $(document).on('click', '#font_delete_button', function () {
+            $(document).on('click', '.font_delete_button', function() {
                 const index = $(this).data('index');
                 $(this).closest('.repeater_row').remove(); // Remove the row
             });
 
-
             // Remove URL and reset upload button for specific input
-            $(document).on('click', '.remove_font_button', function (event) {
+            
+            $(document).on('click', '.remove_font_button', function(event) {
                 event.preventDefault();
                 var button = $(this);
                 var input = button.siblings('input[type="text"]');
 
-                input.val(''); // Clear the input value
-                button.hide(); // Hide the remove button
-                button.siblings('.upload_custom_font_button').show(); // Show the upload button again
+                input.val(''); 
+                button.hide(); 
+                button.siblings('.upload_custom_font_button').show();
             });
         });
     </script>
-    <?php
+<?php
 }
+
 
 add_action('admin_footer', 'custom_font_upload_script');
